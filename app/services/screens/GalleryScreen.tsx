@@ -22,6 +22,7 @@ export default function GalleryScreen() {
   const [activeTab, setActiveTab] = useState('gallery');
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     loadImages();
@@ -81,6 +82,30 @@ export default function GalleryScreen() {
     } catch (error) {
       console.error('Image pick error', error);
       Alert.alert('Error', 'Failed to pick or save image');
+    }
+  };
+
+  const takePicture = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera permission is required.');
+        return;
+      }
+  
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+  
+      if (!result.canceled) {
+        await DatabaseService.addImage(result.assets[0].uri);
+      }
+      loadImages();
+    } catch (error) {
+      console.error('Camera error', error);
+      Alert.alert('Error', 'Failed to take picture.');
     }
   };
 
@@ -168,15 +193,40 @@ export default function GalleryScreen() {
         <View style={styles.fullScreenImageContainer}>
           <TouchableOpacity 
             style={styles.closeButton} 
-            onPress={() => setSelectedImage(null)}
+            onPress={() => { 
+              setSelectedImage(null)
+              setShowInfo(false);
+            }}
           >
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
-          <Image 
-            source={{ uri: selectedImage.uri }} 
-            style={styles.fullScreenImage} 
-            resizeMode="contain" 
-          />
+          
+          <TouchableOpacity 
+            style={styles.fullScreenImageTouchable} 
+            onPress={() => setShowInfo(!showInfo)}
+            activeOpacity={1}
+          >
+            <Image 
+              source={{ uri: selectedImage.uri }} 
+              style={styles.fullScreenImage} 
+              resizeMode="contain" 
+            />
+          </TouchableOpacity>
+
+          {showInfo && (
+            <View style={styles.imageInfoContainer}>
+              <Text style={styles.imageInfoText}>
+                Location: {selectedImage.latitude && selectedImage.longitude 
+                  ? `${selectedImage.latitude.toFixed(4)}, ${selectedImage.longitude.toFixed(4)}` 
+                  : 'No location data'}
+              </Text>
+              <Text style={styles.imageInfoText}>
+                Captured: {selectedImage.timestamp 
+                  ? new Date(selectedImage.timestamp).toLocaleString() 
+                  : 'Unknown date'}
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -194,7 +244,18 @@ export default function GalleryScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={pickImage}
+          onPress={() =>
+            Alert.alert(
+              'Add Image',
+              'Choose an option',
+              [
+                { text: 'Take Picture', onPress: takePicture },
+                { text: 'Pick from Gallery', onPress: pickImage },
+                { text: 'Cancel', style: 'cancel' },
+              ],
+              { cancelable: true }
+            )
+          }
         >
           <Ionicons name="add" size={40} color="white" />
         </TouchableOpacity>
@@ -263,7 +324,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.9)',
+    backgroundColor: 'black',
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -294,5 +355,24 @@ const styles = StyleSheet.create({
   emptyStateText: {
     color: colors.text.secondary,
     fontSize: 18,
+  },
+  
+  fullScreenImageTouchable: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageInfoContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 15,
+  },
+  imageInfoText: {
+    color: 'white',
+    fontSize: 16,
+    marginBottom: 5,
   }
 });

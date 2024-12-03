@@ -1,50 +1,77 @@
-# Welcome to your Expo app 👋
+# Geolocation Gallery App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
 
-## Get started
+This React Native mobile application is a feature-rich gallery that allows users to capture, store, and view images with geolocation tracking. The app integrates device camera, image picker, map view, and SQLite database to provide a comprehensive image management experience.
 
-1. Install dependencies
+## Features
 
+-  **Image Capture and Selection**
+  - Take photos directly from the app
+  - Select images from device gallery
+  - Automatic location tagging for each image
+
+-  **Interactive Map View**
+  - Display images on a map based on their capture location
+  - Visual markers showing image locations
+  - Zoom and pan map functionality
+
+-  **Local Storage with SQLite**
+  - Persistent image storage
+  - Metadata tracking (timestamp, location)
+  - CRUD operations for image management
+
+-  **Flexible Gallery Interface**
+  - Grid view of thumbnails
+  - Full-screen image view
+  - Image information display (location, timestamp)
+
+## Prerequisites
+
+- Node.js
+- React Native CLI
+- Expo CLI
+- Android Studio or Xcode
+- Smartphone or Emulator with location services
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ComfortN/galleryApp.git
+   cd galleryApp
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
+
    ```
 
-2. Start the app
-
+3. Install Expo dependencies:
    ```bash
-    npx expo start
+   expo install expo-image-picker expo-location expo-sqlite
    ```
 
-In the output, you'll find options to open the app in a
+4. Run the application:
+   ```bash
+   expo start
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Key Technologies
 
-## Get a fresh project
+- React Native
+- Expo
+- TypeScript
+- SQLite (expo-sqlite)
+- React Native Maps
+- Expo Image Picker
+- Expo Location
 
-When you're ready, run:
+## Permissions
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app requires the following permissions:
+- Camera access
+- Photo library access
+- Location services

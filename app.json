@@ -8,16 +8,26 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.comfortn.galleryApp"
-    },
+    "ios": { 
+      "supportsTablet": true, 
+      "infoPlist": { "NSLocationWhenInUseUsageDescription": 
+      "This app uses your location to tag images with their location.", 
+      "NSCameraUsageDescription": "This app uses your camera to take pictures.", 
+      "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select images." 
+      } 
+      }, 
+      "android": { 
+        "adaptiveIcon": { 
+          "foregroundImage": "./assets/images/adaptive-icon.png", 
+          "backgroundColor": "#ffffff" }, 
+          "package": "com.comfortn.galleryApp", 
+          "permissions": [ 
+            "ACCESS_FINE_LOCATION", 
+            "CAMERA", 
+            "READ_EXTERNAL_STORAGE", 
+            "WRITE_EXTERNAL_STORAGE" 
+            ] 
+          },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -28,12 +38,13 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

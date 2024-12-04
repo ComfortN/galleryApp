@@ -1,28 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  FlatList, 
-  Image, 
-  TouchableOpacity, 
-  Dimensions, 
-  StyleSheet, 
-  Text,
-  Alert
-} from 'react-native';
+import { View, FlatList, Image, TouchableOpacity, Dimensions, StyleSheet, Text, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../constants/colors';
 import MapView, { Marker } from 'react-native-maps';
 import DatabaseService from '../DatabaseService';
 import GeolocationService from '../GeolocationService';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
 export default function GalleryScreen() {
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('gallery');
   const [images, setImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     loadImages();
@@ -40,7 +31,6 @@ export default function GalleryScreen() {
 
   const pickImage = async () => {
     try {
-      // Request permissions
       const { status: cameraRollStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
 
@@ -49,7 +39,6 @@ export default function GalleryScreen() {
         return;
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -59,8 +48,9 @@ export default function GalleryScreen() {
       if (result.canceled) return;
 
       const uri = result.assets[0].uri;
+      const date = new Date().toLocaleDateString();
+      const time = new Date().toLocaleTimeString();
 
-      // Get current location
       let location;
       try {
         location = await GeolocationService.getCurrentLocation();
@@ -70,14 +60,14 @@ export default function GalleryScreen() {
         location = { latitude: null, longitude: null };
       }
 
-      // Save image to database with location
       await DatabaseService.addImage(
-        uri, 
-        location.latitude, 
-        location.longitude
+        uri,
+        location.latitude,
+        location.longitude,
+        date,
+        time
       );
 
-      // Refresh images
       loadImages();
     } catch (error) {
       console.error('Image pick error', error);
@@ -92,21 +82,50 @@ export default function GalleryScreen() {
         Alert.alert('Permission Denied', 'Camera permission is required.');
         return;
       }
-  
+
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 1,
       });
-  
+
+      let location;
+      try {
+        location = await GeolocationService.getCurrentLocation();
+      } catch (locationError) {
+        console.error('Error getting location:', locationError.message);
+        Alert.alert('Location Error', `Failed to get current location. Image will be saved without location data.`);
+        location = { latitude: null, longitude: null };
+      }
+
       if (!result.canceled) {
-        await DatabaseService.addImage(result.assets[0].uri);
+        const date = new Date().toLocaleDateString();
+        const time = new Date().toLocaleTimeString();
+        await DatabaseService.addImage(
+          result.assets[0].uri,
+          location.latitude,
+          location.longitude,
+          date,
+          time
+        );
       }
       loadImages();
     } catch (error) {
       console.error('Camera error', error);
       Alert.alert('Error', 'Failed to take picture.');
     }
+  };
+
+  const confirmDeleteImage = (id) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this image?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', onPress: () => deleteImage(id), style: 'destructive' },
+      ],
+      { cancelable: true }
+    );
   };
 
   const deleteImage = async (id) => {
@@ -149,9 +168,9 @@ export default function GalleryScreen() {
             }}
             title="Image Location"
           >
-            <Image 
-              source={{ uri: img.uri }} 
-              style={styles.markerImage} 
+            <Image
+              source={{ uri: img.uri }}
+              style={styles.markerImage}
             />
           </Marker>
         ))}
@@ -160,7 +179,7 @@ export default function GalleryScreen() {
   };
 
   const renderContent = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case 'gallery':
         return (
           <FlatList
@@ -169,8 +188,17 @@ export default function GalleryScreen() {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => setSelectedImage(item)}
-                onLongPress={() => deleteImage(item.id)}
+                onPress={() => {
+                  console.log('Selected Image:', item);
+                  navigation.navigate('FullScreenImage', {
+                    image: {
+                      ...item,
+                      date: new Date(item.date).toLocaleDateString(),
+                      time: new Date(item.date).toLocaleTimeString(),
+                    },
+                  });
+                }}
+                onLongPress={() => confirmDeleteImage(item.id)}
               >
                 <Image source={{ uri: item.uri }} style={styles.thumbnail} />
               </TouchableOpacity>
@@ -186,51 +214,8 @@ export default function GalleryScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Main Content */}
       {renderContent()}
-      
-      {selectedImage && (
-        <View style={styles.fullScreenImageContainer}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => { 
-              setSelectedImage(null)
-              setShowInfo(false);
-            }}
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.fullScreenImageTouchable} 
-            onPress={() => setShowInfo(!showInfo)}
-            activeOpacity={1}
-          >
-            <Image 
-              source={{ uri: selectedImage.uri }} 
-              style={styles.fullScreenImage} 
-              resizeMode="contain" 
-            />
-          </TouchableOpacity>
 
-          {showInfo && (
-            <View style={styles.imageInfoContainer}>
-              <Text style={styles.imageInfoText}>
-                Location: {selectedImage.latitude && selectedImage.longitude 
-                  ? `${selectedImage.latitude.toFixed(4)}, ${selectedImage.longitude.toFixed(4)}` 
-                  : 'No location data'}
-              </Text>
-              <Text style={styles.imageInfoText}>
-                Captured: {selectedImage.timestamp 
-                  ? new Date(selectedImage.timestamp).toLocaleString() 
-                  : 'Unknown date'}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Bottom Navigation */}
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={styles.tabButton}
@@ -318,34 +303,10 @@ const styles = StyleSheet.create({
     height: width / 3 - 4,
     margin: 2,
   },
-  fullScreenImageContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'black',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  fullScreenImage: { 
-    width: '90%', 
-    height: '80%' 
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 18
-  },
-  markerImage: { 
-    width: 50, 
-    height: 50, 
-    borderRadius: 25 
+  markerImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25
   },
   emptyStateContainer: {
     flex: 1,
@@ -355,24 +316,5 @@ const styles = StyleSheet.create({
   emptyStateText: {
     color: colors.text.secondary,
     fontSize: 18,
-  },
-  
-  fullScreenImageTouchable: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageInfoContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 15,
-  },
-  imageInfoText: {
-    color: 'white',
-    fontSize: 16,
-    marginBottom: 5,
   }
 });

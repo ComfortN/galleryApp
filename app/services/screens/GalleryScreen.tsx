@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Image, TouchableOpacity, Dimensions, StyleSheet, Text, Alert } from 'react-native';
+import { View, FlatList, Image, TouchableOpacity, Dimensions, StyleSheet, Text, Alert, StatusBar } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../constants/colors';
@@ -196,6 +196,7 @@ export default function GalleryScreen() {
                       date: new Date(item.date).toLocaleDateString(),
                       time: new Date(item.date).toLocaleTimeString(),
                     },
+                    onImageDeleted: loadImages,
                   });
                 }}
                 onLongPress={() => confirmDeleteImage(item.id)}
@@ -214,6 +215,10 @@ export default function GalleryScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+              barStyle="light-content"
+              backgroundColor='#18D9A2'
+            />
       {renderContent()}
 
       <View style={styles.tabBar}>

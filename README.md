@@ -75,3 +75,8 @@ The app requires the following permissions:
 - Camera access
 - Photo library access
 - Location services
+
+
+## Project Documentation
+
+https://docs.google.com/document/d/1RmnP-0TDDdUX4LYfNjJZ1v1EVani_ut9nuP3eEP6LuY/edit?usp=sharing
